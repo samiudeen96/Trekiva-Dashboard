@@ -80,8 +80,8 @@ Verified here: the app and all extensions build (`shopify app build`) and typech
 
 ## Open items
 
-1. Link the app to a real Shopify app and dev store (`npm run config:link`, `npm run dev`); `shopify.app.toml` still has a placeholder `client_id` and `example.com` URLs.
-2. Set `APP_URL` in each extension's `src/config.js` (currently `https://example.com`) to the real app URL.
+1. Link the app to a real Shopify app and dev store (`npm run config:link`, `npm run dev`). `shopify.app.toml` now has the real URLs (`https://dashboard.trekiva.in`), but its `client_id` came from the scaffold and has not been confirmed as linked to a Dev Dashboard app. The backend is not yet deployed at that domain.
+2. `APP_URL` in each extension's `src/config.js` is set to `https://dashboard.trekiva.in`. For `shopify app dev` testing, temporarily use the tunnel URL the CLI prints.
 3. Set `SETTINGS_ENCRYPTION_KEY` in `.env` (see `.env.example`).
 4. Delhivery: capture one real success response and the real unknown-waybill / bad-token responses to verify the parser; decide whether to add the scan webhook.
 5. XpressBees: need docs/credentials from XpressBees.
