@@ -1,10 +1,10 @@
 {
-  "title": "Shipment tracking",
-  "shipment": "Shipment {number}",
-  "carrier": "Carrier: {carrier}",
+  "title": "Track your order",
+  "shipmentOf": "Shipment {index} of {total}",
+  "number": "Tracking number {number}",
   "stages": {
     "confirmed": "Order confirmed",
-    "shipped": "Shipped",
+    "shipped": "On its way",
     "out_for_delivery": "Out for delivery",
     "delivered": "Delivered",
     "exception": "Delivery issue",
@@ -12,13 +12,26 @@
     "cancelled": "Cancelled",
     "unknown": "Status update"
   },
-  "lastUpdated": "Last updated {date}",
-  "expected": "Estimated delivery {date}",
-  "source": "Status from {carrier}",
-  "history": "History",
+  "steps": {
+    "confirmed": "Confirmed",
+    "shipped": "Shipped",
+    "out_for_delivery": "Out for delivery",
+    "delivered": "Delivered"
+  },
+  "progressLabel": "Delivery progress",
+  "expected": "Estimated delivery",
+  "lastUpdated": "Last updated",
+  "carrierSays": "{carrier} says: {status}",
+  "notices": {
+    "exception": "There's a problem with this delivery. See the latest update below, or contact us and we'll help.",
+    "returning": "This parcel is on its way back to us.",
+    "cancelled": "This shipment was cancelled."
+  },
+  "stale": "Live tracking isn't available right now. This is the last update we received, on {date}.",
+  "history": "Tracking history ({count})",
   "trackOnCarrier": "Track on the carrier's website",
-  "stale": "Live tracking is unavailable right now. This is the last update we received, on {date}.",
-  "unavailable": "Live tracking isn't available right now.",
+  "unavailableTitle": "Live tracking isn't available right now",
+  "unavailableBody": "Your parcel is with the carrier. Use the link below to see its latest status.",
   "loadError": "We couldn't load tracking for this order.",
   "retry": "Try again"
 }

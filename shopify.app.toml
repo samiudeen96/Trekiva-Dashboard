@@ -7,9 +7,9 @@ name = "Trekiva Customer Dashboard"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-# read_orders / read_customers: confirm an order belongs to the customer asking to return it.
-# read_products: read the final-sale tag. Customer fields need protected customer data approval.
-scopes = "read_orders,read_products,read_customers"
+# read_orders / read_customers: confirm an order belongs to the customer asking for its
+# tracking, and read its fulfillments. Customer fields need protected customer data approval.
+scopes = "read_orders,read_customers"
 
 [webhooks]
 api_version = "2027-01"

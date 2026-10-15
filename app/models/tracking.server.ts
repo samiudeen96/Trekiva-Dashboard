@@ -6,6 +6,12 @@ import db from "../db.server";
 import type { CarrierTracking } from "../carriers/types";
 import { getCarrierCredentials, listCarrierSettings } from "./carrier.server";
 
+const ORDER_GID = /^gid:\/\/shopify\/Order\/\d+(\?.*)?$/;
+
+export function isOrderGid(value: unknown): value is string {
+  return typeof value === "string" && ORDER_GID.test(value);
+}
+
 const ORDER_QUERY = `#graphql
   query TrackingOrder($id: ID!) {
     order(id: $id) {

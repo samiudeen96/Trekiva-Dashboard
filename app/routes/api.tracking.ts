@@ -1,9 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
-import { isOrderGid } from "../models/returns.server";
-import { getOrderTracking } from "../models/tracking.server";
+import { getOrderTracking, isOrderGid } from "../models/tracking.server";
 
-// Identity comes only from the verified session token (see api.wishlist.ts).
+// Identity comes only from the verified session token.
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { sessionToken, cors } = await authenticate.public.customerAccount(request);
   const customerId = sessionToken.sub;
