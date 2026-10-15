@@ -21,14 +21,14 @@ app/
     api.support.ts    customer API: create support ticket
     api.returns.ts    customer API: return state for an order, create return request
     api.tracking.ts   customer API: tracking for an order's shipments
-    app._index.tsx    admin home (placeholder)
-    app.support.tsx   admin: list support tickets
+    app._index.tsx    admin home: counts of waiting tickets/returns, live carriers, setup checklist
+    app.support.tsx   admin: support tickets, open/resolved, links to the customer and order in Shopify admin
     app.returns.tsx   admin: return policy settings, approve/reject requests
     app.settings.tsx  admin: carrier credentials (eKart, XpressBees)
   models/             database and business logic (*.server.ts)
     returns-eligibility.ts   pure eligibility rules (no DB / network)
   carriers/           carrier adapters: types.ts, ekart.server.ts
-  utils/              crypto.server.ts (AES-256-GCM), reference.server.ts
+  utils/              crypto.server.ts (AES-256-GCM), reference.server.ts, labels.ts (plain-language labels and admin links shared by admin pages)
 extensions/
   customer-account-dashboard/  Overview page (full page)
   wishlist-page/               Wishlist page (full page)
@@ -53,7 +53,7 @@ Extensions call the app backend with a Shopify session token. Routes call `authe
 |---|---|
 | Overview | Built: latest orders, status badges, empty/loading/error. Counts are derived only from loaded orders (latest 10). No fake totals. |
 | Wishlist | Backend + page built (product level, price/stock refreshed from Storefront API). **Nothing can add items yet**: needs a storefront heart button (theme work). |
-| Help & Support | Built. Rate limit 5 tickets/customer/hour. Reference (TRK-XXXXXX) is returned only after the row is saved. Contact email, WhatsApp, FAQ URL and response-time wording are merchant settings in the extension editor and hidden until set. No notification to staff yet. |
+| Help & Support | Built. Rate limit 5 tickets/customer/hour. Reference (TRK-XXXXXX) is returned only after the row is saved. Contact email, WhatsApp, FAQ URL and response-time wording are merchant settings in the extension editor and hidden until set. Staff can mark a ticket resolved or reopen it in the admin. No notification to staff yet. |
 | Account Settings | Built, read-only, links to native Profile and Addresses. |
 | Returns | Built. **Nothing is refunded or created in Shopify by the app; Trekiva's team must approve each request** (admin page) and does the refund/replacement in Shopify. Policy settings (window days, exchanges on/off, final-sale tag) are admin settings; returns stay closed until a window is set. Eligibility is re-checked server-side inside a transaction. Audit trail in ReturnEvent. |
 | Tracking | eKart and Delhivery. Delhivery is built from a review PDF whose sample response is *illustrative, not verbatim*, so its parser is unverified against a real response; it uses `GET {track|staging-express}.delhivery.com/api/v1/packages/json/?waybill=` with `Authorization: Token`, server-side only, with a staging toggle in carrier settings. eKart via its open endpoint `GET https://app.elite.ekartlogistics.in/api/v1/track/{id}` (no auth). Statuses mapped to a neutral set. Fallback carrier link if unavailable. |

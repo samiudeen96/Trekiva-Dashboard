@@ -264,3 +264,7 @@ export async function reviewReturnRequest(
   });
   return true;
 }
+
+export function countPendingReturns(shop: string) {
+  return db.returnRequest.count({ where: { shop, status: "requested" } });
+}

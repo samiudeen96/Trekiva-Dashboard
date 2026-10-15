@@ -77,3 +77,20 @@ export function listTickets(shop: string) {
     take: 100,
   });
 }
+
+export function countOpenTickets(shop: string) {
+  return db.supportTicket.count({ where: { shop, status: "open" } });
+}
+
+// Only "open" and "resolved" exist; changing a ticket never touches the customer.
+export async function setTicketStatus(
+  shop: string,
+  id: string,
+  status: "open" | "resolved",
+) {
+  const result = await db.supportTicket.updateMany({
+    where: { id, shop },
+    data: { status },
+  });
+  return result.count > 0;
+}
