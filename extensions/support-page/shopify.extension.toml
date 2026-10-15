@@ -1,0 +1,43 @@
+# Trekiva Help & Support: full-page customer account extension (ACCT-09).
+api_version = "2026-10"
+
+[[extensions]]
+name = "Trekiva Help & Support"
+handle = "support-page"
+type = "ui_extension"
+uid = "e14cd645-2822-9c5c-6171-46155a1e887b93b77ffc"
+
+[[extensions.targeting]]
+module = "./src/SupportPage.jsx"
+target = "customer-account.page.render"
+
+[extensions.targeting.capabilities]
+allow_direct_linking = true
+
+[extensions.capabilities]
+# Network access: requests are sent to the Trekiva app backend.
+network_access = true
+
+# Merchant-editable in the Checkout and Accounts editor. Empty values hide the
+# matching section, so nothing is shown until Trekiva has configured it.
+[extensions.settings]
+
+  [[extensions.settings.fields]]
+  key = "support_email"
+  type = "single_line_text_field"
+  name = "Support email"
+
+  [[extensions.settings.fields]]
+  key = "whatsapp_number"
+  type = "single_line_text_field"
+  name = "WhatsApp number (digits only, with country code)"
+
+  [[extensions.settings.fields]]
+  key = "faq_url"
+  type = "single_line_text_field"
+  name = "FAQ page URL"
+
+  [[extensions.settings.fields]]
+  key = "response_time_text"
+  type = "single_line_text_field"
+  name = "Response time wording (approved by Trekiva)"

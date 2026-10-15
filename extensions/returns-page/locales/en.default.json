@@ -1,0 +1,43 @@
+{
+  "pageTitle": "Returns and exchanges",
+  "forOrder": "Order {order}",
+  "reviewNotice": "Every request is reviewed by our team. No refund or replacement is issued until your request is approved.",
+  "type": "Request type",
+  "types": { "return": "Return", "exchange": "Exchange" },
+  "reason": "Reason",
+  "reasons": {
+    "size": "Size or fit issue",
+    "damaged": "Damaged item",
+    "wrong_item": "Wrong item received",
+    "other": "Something else"
+  },
+  "items": "Items",
+  "quantity": "Quantity (up to {max})",
+  "details": "Additional details (optional)",
+  "submit": "Submit request",
+  "noneSelected": "Choose at least one item.",
+  "sent": "Request received",
+  "sentBody": "Your reference number is {reference}. Our team will review it and get back to you.",
+  "previous": "Your requests for this order",
+  "status": {
+    "requested": "Under review",
+    "approved": "Approved. Our team will contact you with next steps.",
+    "rejected": "Not approved. Contact support if you have questions."
+  },
+  "closed": {
+    "closed": "Returns aren't available right now.",
+    "cancelled": "This order was cancelled, so it can't be returned.",
+    "not_shipped": "This order hasn't shipped yet.",
+    "window_passed": "The return period for this order has ended."
+  },
+  "finalSale": "Final sale, can't be returned",
+  "noneLeft": "Already requested, or nothing left to return",
+  "errors": {
+    "ineligible": "Those items can't be returned any more. Please refresh and check again.",
+    "invalid": "Please check the details and try again.",
+    "exchange_disabled": "Exchanges aren't available.",
+    "generic": "We couldn't submit your request. Nothing was sent, so please try again."
+  },
+  "loadError": "We couldn't load return details for this order.",
+  "retry": "Try again"
+}

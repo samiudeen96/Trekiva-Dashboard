@@ -1,0 +1,15 @@
+{
+  "pageTitle": "Account settings",
+  "subtitle": "Your details are managed securely by Shopify.",
+  "profile": "Profile",
+  "name": "Name",
+  "email": "Email",
+  "phone": "Mobile number",
+  "notProvided": "Not provided",
+  "manageProfile": "Manage profile",
+  "addresses": "Default address",
+  "noAddress": "You haven't saved an address yet.",
+  "manageAddresses": "Manage addresses",
+  "loadError": "We couldn't load your details. You can still manage them using the links below.",
+  "retry": "Try again"
+}
