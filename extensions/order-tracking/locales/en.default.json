@@ -1,0 +1,24 @@
+{
+  "title": "Shipment tracking",
+  "shipment": "Shipment {number}",
+  "carrier": "Carrier: {carrier}",
+  "stages": {
+    "confirmed": "Order confirmed",
+    "shipped": "Shipped",
+    "out_for_delivery": "Out for delivery",
+    "delivered": "Delivered",
+    "exception": "Delivery issue",
+    "returning": "Returning to sender",
+    "cancelled": "Cancelled",
+    "unknown": "Status update"
+  },
+  "lastUpdated": "Last updated {date}",
+  "expected": "Estimated delivery {date}",
+  "source": "Status from {carrier}",
+  "history": "History",
+  "trackOnCarrier": "Track on the carrier's website",
+  "stale": "Live tracking is unavailable right now. This is the last update we received, on {date}.",
+  "unavailable": "Live tracking isn't available right now.",
+  "loadError": "We couldn't load tracking for this order.",
+  "retry": "Try again"
+}

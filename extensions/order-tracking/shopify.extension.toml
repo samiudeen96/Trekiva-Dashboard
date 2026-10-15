@@ -1,0 +1,16 @@
+# Shipment tracking shown directly on the order page (ACCT-04).
+api_version = "2026-10"
+
+[[extensions]]
+name = "Trekiva Order Tracking"
+handle = "order-tracking"
+type = "ui_extension"
+uid = "1e074be0-959f-d0ed-cc38-f78fe19f82af88ea09de"
+
+[[extensions.targeting]]
+module = "./src/TrackingBlock.jsx"
+target = "customer-account.order-status.block.render"
+
+[extensions.capabilities]
+# Tracking is fetched through the Trekiva app backend, which holds carrier access.
+network_access = true

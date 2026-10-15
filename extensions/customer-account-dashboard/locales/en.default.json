@@ -1,0 +1,32 @@
+{
+  "pageTitle": "Overview",
+  "welcome": "Welcome back, {name}.",
+  "welcomeGeneric": "Welcome back.",
+  "subtitle": "Everything you need for a seamless Trekiva experience.",
+  "recentOrders": "Recent orders",
+  "viewAllOrders": "View all orders",
+  "viewOrder": "View order",
+  "openShipments": "Open shipments",
+  "openShipmentsHint": "Among your latest orders",
+  "latestOrders": "Latest orders loaded",
+  "shortcuts": "Quick links",
+  "orders": "My orders",
+  "profile": "Profile and addresses",
+  "emptyTitle": "No orders yet",
+  "emptyBody": "When you place your first order, it will show up here.",
+  "startShopping": "Start shopping",
+  "loadError": "We couldn't load your account details. Please refresh the page to try again.",
+  "retry": "Try again",
+  "status": {
+    "paid": "Paid",
+    "pending": "Payment pending",
+    "refunded": "Refunded",
+    "partiallyRefunded": "Partially refunded",
+    "other": "Payment {status}",
+    "unfulfilled": "Not shipped yet",
+    "inProgress": "In progress",
+    "partiallyShipped": "Partially shipped",
+    "shipped": "Shipped",
+    "delivered": "Delivered"
+  }
+}

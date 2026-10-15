@@ -1,0 +1,151 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "sqlite"
+  url      = "file:dev.sqlite"
+}
+
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+}
+
+// One row per saved product. shop and customerId come from the verified
+// session token, never from the request body.
+model WishlistItem {
+  id         String   @id @default(cuid())
+  shop       String
+  customerId String
+  productId  String
+  createdAt  DateTime @default(now())
+
+  @@unique([shop, customerId, productId])
+  @@index([shop, customerId])
+}
+
+// A customer support request. The reference number is only shown to the
+// customer after this row has been written successfully.
+model SupportTicket {
+  id         String   @id @default(cuid())
+  reference  String   @unique
+  shop       String
+  customerId String
+  subject    String
+  orderId    String? // customer-supplied, not verified against the customer's orders
+  message    String
+  consent    Boolean
+  status     String   @default("open")
+  createdAt  DateTime @default(now())
+
+  @@index([shop, customerId, createdAt])
+  @@index([shop, status, createdAt])
+}
+
+// Carrier API settings, one row per shop and carrier. Credentials live only
+// in secretsEnc (AES-256-GCM) and are never returned to the browser.
+model CarrierSetting {
+  id                  String   @id @default(cuid())
+  shop                String
+  carrier             String // "ekart" | "xpressbees" | "delhivery"
+  enabled             Boolean  @default(false)
+  useStaging          Boolean  @default(false) // Delhivery staging and production tokens are not interchangeable
+  accountId           String?
+  trackingUrlTemplate String? // customer-facing fallback link, uses {awb}
+  secretsEnc          String? // encrypted JSON: { apiKey?, password? }
+  updatedAt           DateTime @updatedAt
+
+  @@unique([shop, carrier])
+}
+
+// Return policy knobs the team controls. Returns stay closed until
+// windowDays is set.
+model ReturnSetting {
+  shop             String  @id
+  windowDays       Int?
+  exchangesEnabled Boolean @default(false)
+  finalSaleTag     String  @default("final-sale")
+}
+
+// A customer's return/exchange request. Nothing is refunded or created in
+// Shopify by this app: the team reviews each request and acts in Shopify.
+model ReturnRequest {
+  id         String        @id @default(cuid())
+  reference  String        @unique
+  shop       String
+  customerId String
+  orderId    String
+  orderName  String
+  type       String // "return" | "exchange"
+  reason     String
+  details    String?
+  status     String        @default("requested") // requested | approved | rejected
+  reviewNote String?
+  createdAt  DateTime      @default(now())
+  reviewedAt DateTime?
+  items      ReturnItem[]
+  events     ReturnEvent[]
+
+  @@index([shop, customerId, orderId])
+  @@index([shop, status, createdAt])
+}
+
+model ReturnItem {
+  id         String        @id @default(cuid())
+  requestId  String
+  request    ReturnRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  lineItemId String
+  title      String
+  quantity   Int
+
+  @@index([requestId])
+}
+
+// Append-only audit trail.
+model ReturnEvent {
+  id        String        @id @default(cuid())
+  requestId String
+  request   ReturnRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  status    String
+  actor     String // "customer" | "team"
+  note      String?
+  createdAt DateTime      @default(now())
+
+  @@index([requestId])
+}
+
+// Last tracking result per shipment: serves as a short cache, keeps delivered
+// shipments from being re-fetched, and is shown (clearly marked) when the
+// carrier can't be reached. Only read after the order's owner is verified.
+model TrackingSnapshot {
+  id       String   @id @default(cuid())
+  shop     String
+  carrier  String
+  awb      String
+  data     String // JSON of CarrierTracking
+  syncedAt DateTime
+
+  @@unique([shop, carrier, awb])
+}

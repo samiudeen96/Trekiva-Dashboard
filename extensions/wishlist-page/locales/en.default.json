@@ -1,0 +1,17 @@
+{
+  "pageTitle": "Wishlist",
+  "subtitle": "Keep favourite styles close. Prices and availability are always up to date.",
+  "emptyTitle": "Your wishlist is empty",
+  "emptyBody": "Save styles you love and they will show up here.",
+  "startShopping": "Start shopping",
+  "inStock": "In stock",
+  "soldOut": "Sold out",
+  "viewProduct": "View product",
+  "remove": "Remove",
+  "removed": "Removed from wishlist",
+  "removeError": "We couldn't remove that item. Please try again.",
+  "unavailableTitle": "No longer available",
+  "unavailableBody": "This product has been removed from the store.",
+  "loadError": "We couldn't load your wishlist. Please try again.",
+  "retry": "Try again"
+}

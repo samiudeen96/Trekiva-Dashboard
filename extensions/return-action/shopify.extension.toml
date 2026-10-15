@@ -1,0 +1,13 @@
+# Adds "Request return or exchange" to each order's action menu and links to
+# the returns-page extension.
+api_version = "2026-10"
+
+[[extensions]]
+name = "Trekiva Return Action"
+handle = "return-action"
+type = "ui_extension"
+uid = "23dbc93e-fd82-e1d5-9dcc-8c765967a1d3f6bc42cf"
+
+[[extensions.targeting]]
+module = "./src/ReturnAction.jsx"
+target = "customer-account.order.action.menu-item.render"
