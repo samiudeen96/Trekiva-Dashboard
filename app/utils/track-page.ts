@@ -14,8 +14,8 @@ export const TRACK_PAGE_HTML = String.raw`
   /* One calm surface: space and hairlines instead of boxes. */
   .trk { max-width: 620px; margin: 0 auto; padding: 56px 20px 96px; line-height: 1.55; color: inherit;
     --ink: #111; --muted: rgba(17,17,17,.62); --line: rgba(17,17,17,.09); --fill: rgba(17,17,17,.05);
-    /* --ok is the accent: progress line, steps, pill, icon. --done is the colour of the Delivered moment. Change them here to re-colour the page. */
-    --ok: #17803f; --done: #17803f; --bad: #c0392b; --warn: #b7791f; --mute: #6b7280; --tone: var(--ok); }
+    /* --ok is the accent (ink): progress line, steps, pill, icon. --done is the colour of the Delivered moment (deep teal). Change them here to re-colour the page. */
+    --ok: #111111; --done: #0f766e; --bad: #c0392b; --warn: #b7791f; --mute: #6b7280; --tone: var(--ok); }
   .trk *, .trk *::before, .trk *::after { box-sizing: border-box; }
   .trk [hidden] { display: none !important; }
   .trk button { font: inherit; cursor: pointer; }
