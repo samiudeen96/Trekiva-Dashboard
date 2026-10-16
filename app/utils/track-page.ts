@@ -27,14 +27,20 @@ export const TRACK_PAGE_HTML = String.raw`
   .trk-meta { opacity: .7; font-size: .9em; margin-bottom: 10px; }
   .trk-status { font-size: 1.4em; font-weight: 700; margin: 0 0 4px; }
   .trk-says { opacity: .7; margin: 0 0 18px; }
-  .trk-steps { display: flex; margin: 0 0 20px; padding: 0; list-style: none; }
-  .trk-steps li { flex: 1; text-align: center; font-size: .85em; opacity: .55; position: relative; padding-top: 22px; }
-  .trk-steps li::before { content: ""; position: absolute; top: 5px; left: 50%; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: rgba(0,0,0,.25); z-index: 1; }
-  .trk-steps li::after { content: ""; position: absolute; top: 10px; left: -50%; width: 100%; height: 2px; background: rgba(0,0,0,.2); }
-  .trk-steps li:first-child::after { display: none; }
-  .trk-steps li.done { opacity: 1; }
-  .trk-steps li.done::before, .trk-steps li.done::after { background: #1a7f4b; }
-  .trk-steps li.now { font-weight: 700; }
+  .trk-steps { display: grid; grid-template-columns: repeat(4, 1fr); margin: 6px 0 24px; padding: 0; list-style: none; }
+  .trk-steps li { position: relative; text-align: center; padding-top: 46px; font-size: .86em; line-height: 1.3; color: rgba(0,0,0,.5); }
+  .trk-steps .dot { position: absolute; top: 0; left: 50%; width: 34px; height: 34px; margin-left: -17px; border-radius: 50%; background: #fff; border: 2px solid rgba(0,0,0,.2); display: flex; align-items: center; justify-content: center; z-index: 1; color: #fff; }
+  .trk-steps .dot svg { width: 18px; height: 18px; display: block; }
+  .trk-steps li + li::before { content: ""; position: absolute; top: 15px; left: -50%; width: 100%; height: 4px; border-radius: 2px; background: rgba(0,0,0,.12); }
+  .trk-steps li.done::before { background: #1a7f4b; }
+  .trk-steps li.done { color: inherit; }
+  .trk-steps li.done .dot { background: #1a7f4b; border-color: #1a7f4b; }
+  .trk-steps li.now:not(.fin) .dot { box-shadow: 0 0 0 5px rgba(26,127,75,.18); animation: trkPulse 2s ease-out infinite; }
+  @keyframes trkPulse { 0% { box-shadow: 0 0 0 0 rgba(26,127,75,.4); } 100% { box-shadow: 0 0 0 11px rgba(26,127,75,0); } }
+  @media (prefers-reduced-motion: reduce) { .trk-steps li.now:not(.fin) .dot { animation: none; } }
+  .trk-steps .lab { display: block; font-weight: 600; }
+  .trk-steps li.now .lab { font-weight: 800; }
+  .trk-steps .dt { display: block; margin-top: 2px; opacity: .65; font-size: .92em; }
   .trk-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
   .trk-fact { border: 1px solid rgba(0,0,0,.14); border-radius: 10px; padding: 10px 14px; background: #fff; color: #111; }
   .trk-fact b { display: block; }
@@ -90,6 +96,25 @@ export const TRACK_PAGE_HTML = String.raw`
     cancelled: 'This shipment was cancelled.'
   };
 
+  var SVG_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+  var DOT_ICON = {
+    check: SVG_OPEN + '<path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+    confirmed: SVG_OPEN + '<path d="M7 4h10v16H7z M10 9h4 M10 13h4"/></svg>',
+    shipped: SVG_OPEN + '<path d="M3 7h11v9H3z M14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>',
+    out_for_delivery: SVG_OPEN + '<path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>'
+  };
+  function shortDay(iso) {
+    return new Date(iso).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short' });
+  }
+  // The earliest event the carrier reported for a step, or null. Events are newest first.
+  function stepDate(events, step) {
+    var found = null;
+    for (var k = 0; k < (events || []).length; k++) {
+      if (events[k].stage === step && events[k].at) found = events[k].at;
+    }
+    return found;
+  }
+
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -131,8 +156,19 @@ export const TRACK_PAGE_HTML = String.raw`
       var at = STEPS.indexOf(t.stage);
       if (at >= 0) {
         var ol = el('ol', 'trk-steps');
+        var last = STEPS.length - 1;
         for (var i = 0; i < STEPS.length; i++) {
-          var li = el('li', (i <= at ? 'done' : '') + (i === at ? ' now' : ''), STEP_LABEL[STEPS[i]]);
+          var finished = i < at || (i === at && at === last);
+          var li = el('li', (i <= at ? 'done' : '') + (i === at ? ' now' : '') + (i === at && at === last ? ' fin' : ''));
+          var dot = el('span', 'dot');
+          // These icons are fixed strings in this file, never server data.
+          dot.innerHTML = finished ? DOT_ICON.check : (i === at ? DOT_ICON[STEPS[i]] : '');
+          li.appendChild(dot);
+          li.appendChild(el('span', 'lab', STEP_LABEL[STEPS[i]]));
+          if (i <= at) {
+            var when1 = stepDate(t.events, STEPS[i]);
+            if (when1) li.appendChild(el('span', 'dt', shortDay(when1)));
+          }
           ol.appendChild(li);
         }
         card.appendChild(ol);

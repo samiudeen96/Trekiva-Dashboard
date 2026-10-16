@@ -184,26 +184,7 @@ function Live({tracking, shipment, carrier}) {
         </s-text>
       </s-stack>
 
-      {onTrack && (
-        <s-stack gap="small-200">
-          <s-progress
-            accessibilityLabel={t('progressLabel')}
-            value={stepIndex}
-            max={STEPS.length - 1}
-          />
-          <s-grid gridTemplateColumns="repeat(4, 1fr)" gap="small-200">
-            {STEPS.map((step, i) => (
-              <s-text
-                key={step}
-                type={i === stepIndex ? 'strong' : undefined}
-                color={i <= stepIndex ? undefined : 'subdued'}
-              >
-                {t(`steps.${step}`)}
-              </s-text>
-            ))}
-          </s-grid>
-        </s-stack>
-      )}
+      {onTrack && <Stepper events={tracking.events} at={stepIndex} />}
 
       {!onTrack && notice && (
         <s-banner tone={tracking.stage === 'exception' ? 'critical' : 'info'}>
@@ -228,6 +209,91 @@ function Live({tracking, shipment, carrier}) {
 
       {tracking.events.length > 0 && <History events={tracking.events} />}
     </s-stack>
+  );
+}
+
+const STEP_ICON = {
+  confirmed: 'order',
+  shipped: 'truck',
+  out_for_delivery: 'delivery',
+  delivered: 'delivered',
+};
+
+// Short date for a step, such as "13 Oct".
+function shortDay(iso) {
+  return shopify.i18n.formatDate(new Date(iso), {day: 'numeric', month: 'short'});
+}
+
+// The earliest event the carrier reported for a step, or null. Events are newest first.
+function stepDate(events, step) {
+  let found = null;
+  for (const e of events ?? []) {
+    if (e.stage === step && e.at) found = e.at;
+  }
+  return found;
+}
+
+// A thin connecting line between two steps. Thicker once that stretch is done.
+function Line({show, on}) {
+  if (!show) return <s-box />;
+  return (
+    <s-box
+      border="base"
+      borderWidth={on ? 'large none none none' : 'base none none none'}
+      borderRadius="max"
+    />
+  );
+}
+
+// Four steps: a green check for each one reached, a larger icon on the current
+// step, an empty circle for the ones still to come, and the carrier's real date
+// under every step that has been reached.
+function Stepper({events, at}) {
+  const last = STEPS.length - 1;
+  return (
+    <s-grid
+      gridTemplateColumns="repeat(4, 1fr)"
+      gap="none"
+      alignItems="start"
+      accessibilityLabel={t('progressLabel')}
+    >
+      {STEPS.map((step, i) => {
+        const finished = i < at || (i === at && at === last);
+        const current = i === at && !finished;
+        const date = i <= at ? stepDate(events, step) : null;
+        return (
+          <s-stack key={step} alignItems="center" gap="small-300">
+            <s-grid
+              gridTemplateColumns="1fr auto 1fr"
+              alignItems="center"
+              gap="none"
+              inlineSize="100%"
+            >
+              <Line show={i > 0} on={i > 0 && i <= at} />
+              {finished ? (
+                <s-icon type="check-circle-filled" tone="success" size="large" />
+              ) : current ? (
+                <s-icon type={STEP_ICON[step]} tone="info" size="large-100" />
+              ) : (
+                <s-icon type="circle" tone="neutral" size="large" />
+              )}
+              <Line show={i < last} on={i < at} />
+            </s-grid>
+            <s-text
+              type={current ? 'strong' : undefined}
+              color={i <= at ? undefined : 'subdued'}
+            >
+              {t(`steps.${step}`)}
+            </s-text>
+            {date && (
+              <s-text color="subdued" type="small">
+                {shortDay(date)}
+              </s-text>
+            )}
+          </s-stack>
+        );
+      })}
+    </s-grid>
   );
 }
 
