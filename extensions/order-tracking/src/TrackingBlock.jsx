@@ -70,13 +70,20 @@ function Tracking() {
     load();
   }, [orderId]);
 
-  // Nothing to show until the order has tracking numbers.
-  if (state.phase === 'ready' && !state.shipments.length) return null;
+  // Customers only see this block when there is something to show. In the
+  // editor preview the person setting things up needs to know why it is blank,
+  // so it explains itself there instead of disappearing.
+  const inEditor = Boolean(shopify.extension.editor);
+  if (state.phase === 'ready' && !state.shipments.length) {
+    return inEditor ? (
+      <s-section heading={t('title')}>
+        <s-text color="subdued">{t('editorNoShipments')}</s-text>
+      </s-section>
+    ) : null;
+  }
 
   // Tracking is a bonus on the order page, so a failure must not put an error
-  // in front of customers. It is still shown in the editor preview, where the
-  // person setting things up needs to see it.
-  const inEditor = Boolean(shopify.extension.editor);
+  // in front of customers. It is still shown in the editor preview.
   if (state.phase === 'error' && !inEditor) return null;
 
   const shipments = state.shipments ?? [];

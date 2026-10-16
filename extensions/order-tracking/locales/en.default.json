@@ -34,5 +34,6 @@
   "unavailableBody": "Your parcel is with the carrier. Use the link below to see its latest status.",
   "loadError": "Tracking couldn't load for this order.",
   "retry": "Try again",
-  "editorOnly": "Customers don't see this message. Check the app's server log for the reason."
+  "editorOnly": "Customers don't see this message. Check the app's server log for the reason.",
+  "editorNoShipments": "This order has no tracking number yet, so customers see nothing here. Pick an order that has been shipped with a tracking number to preview tracking."
 }

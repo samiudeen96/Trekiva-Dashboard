@@ -25,6 +25,19 @@
 - [ ] Verify rendering in a real store (icons, spacing, mobile 320px)
 - [ ] Accessibility check (keyboard, screen reader)
 
+## 1b. Public Track your order page (visitors not signed in)
+
+- [x] Storefront page at /apps/track through Shopify's app proxy (served inside the theme)
+- [x] Order number plus email or phone verification; generic answer for every failure
+- [x] Rate limits and a lockout after repeated wrong guesses
+- [x] Same step bar, history and carrier link as the account block
+- [x] Unsigned or forged proxy requests are rejected
+- [ ] Verify on the store: /apps/track loads in the theme and finds a real recent order
+- [ ] Add a "Track your order" link to the store menu or footer
+- [ ] Decide on read_all_orders (orders older than 60 days) and protected customer data approval
+- [ ] Confirm the visitor's address reaches the app (per-visitor limit)
+- [ ] Check how guests on the account order-status link behave
+
 ## 2. Backend
 
 - [x] Session-token authentication; shop and customer only from the verified token
@@ -83,5 +96,6 @@
 | Customer login | Shopify native | No custom password database |
 | App scope | Order tracking only | Wishlist, Support, Returns, Settings removed (tag `full-version`) |
 | Carrier choice | Per shipment, by carrier name on the fulfillment | URL-host matching is a possible improvement |
+| Visitors not signed in | Public page via app proxy, verified by order number + email or phone | Never by tracking number alone |
 | Updates | Polling with snapshots | Webhooks not built |
 | Carrier secrets | Server-side, AES-256-GCM | Never sent to the browser |

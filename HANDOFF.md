@@ -4,7 +4,7 @@ You are being asked to review or continue a Shopify app. Read this whole file fi
 
 ## What this is
 
-A Shopify app that shows **live shipment tracking on the order page of Trekiva's customer accounts** (footwear store, India, INR). Trekiva keeps its Impact theme storefront and Shopify's own customer login. Native Orders, Profile and Addresses are untouched. It supports **eKart, Delhivery and XpressBees**.
+A Shopify app that shows **live shipment tracking** (footwear store, India, INR) in two places: **on the order page of signed-in customers' accounts**, and on a **public "Track your order" page on the storefront for visitors who aren't signed in**. Trekiva keeps its Impact theme storefront and Shopify's own customer login. Native Orders, Profile and Addresses are untouched. It supports **eKart, Delhivery and XpressBees**.
 
 The customer-facing part is one Shopify **Customer Account UI Extension** (web components, Preact, API version 2026-10, target `customer-account.order-status.block.render`). It renders inside Shopify's hosted account shell, so it cannot ship arbitrary HTML or CSS.
 
@@ -17,15 +17,18 @@ The app used to also include Wishlist, Help & Support, Returns and Account Setti
 ```
 app/
   routes/
-    api.tracking.ts      customer API: tracking for one order's shipments
+    api.tracking.ts      signed-in customer API: tracking for one order's shipments
+    proxy._index.tsx     public page at /apps/track (Shopify app proxy, served as Liquid)
+    proxy.lookup.ts      public lookup at /apps/track/lookup (POST: order number + email or phone)
     app._index.tsx       admin home: carrier cards + setup checklist
     app.settings.tsx     admin: carrier credentials, per-carrier "Check it works" test
   models/
-    tracking.server.ts   loads the order's fulfillments, matches carrier, snapshots
+    tracking.server.ts   buildShipments (shared), signed-in lookup, carrier match, snapshots
+    public-tracking.server.ts  public lookup: order number + email/phone check, rate limits
     carrier.server.ts    carrier settings (secrets encrypted)
     carrier-test.server.ts  admin test tool
   carriers/              types.ts (neutral model), ekart / delhivery / xpressbees adapters
-  utils/                 crypto.server.ts (AES-256-GCM), labels.ts
+  utils/                 crypto.server.ts (AES-256-GCM), labels.ts, rate-limit.server.ts, track-page.ts (public page HTML)
 extensions/
   order-tracking/        the tracking block shown on the order page
 prisma/schema.prisma     Session, CarrierSetting, TrackingSnapshot
@@ -36,6 +39,16 @@ prisma/schema.prisma     Session, CarrierSetting, TrackingSnapshot
 The extension calls the backend with a Shopify session token. `api.tracking.ts` calls `authenticate.public.customerAccount(request)`. The shop (`dest`, normalised to the bare host) and the customer (`sub`, a Customer GID) come **only** from the verified token. The backend loads the order through the Admin API and checks `order.customer.id` equals the token's customer; a missing or someone else's order gives the same 404. Tracking numbers and carrier names are read from the order's **fulfillments** (`trackingInfo { number company url }`) on the server, never accepted from the browser.
 
 Carrier is chosen **per shipment** by the fulfillment's carrier name containing `ekart`, `delhivery` or `xpressbees` (case-insensitive). Live tracking is fetched only if that carrier is switched on and has its details saved. Otherwise the customer sees the tracking number and the carrier link. If a carrier is down, the last saved snapshot is shown and clearly marked out of date.
+
+## Public Track your order page (not signed in)
+
+Storefront address `https://<store>/apps/track`, configured by `[app_proxy]` in `shopify.app.toml` (`url = https://dashboard.trekiva.in/proxy`, `subpath = track`, `prefix = apps`). Shopify signs each proxied request and `authenticate.public.appProxy` rejects anything unsigned or forged (tested: HTTP 400). The page is returned as `application/liquid` so it sits inside the store's theme.
+
+A visitor enters the **order number plus the email or phone on the order** (never a tracking number alone, which would let people probe carrier accounts and step through other customers' parcels). The server finds the order by name through the Admin API, checks the contact (email case-insensitive; phones by last 10 digits), then reuses the same `buildShipments` and the same steps/history as the account block. Every failure (order missing, contact wrong) returns the same generic answer. Limits: 30 lookups per visitor address and 300 per shop per 10 minutes, and **5 wrong guesses on one order number lock it for 15 minutes** (so a real customer can briefly be locked out by someone guessing). The limiter is in memory and per server instance. The page adds server data only with `textContent` (tested with hostile text), and refuses non-https carrier links.
+
+Limits to know: Admin order search only reaches **orders from the last 60 days** unless the `read_all_orders` scope is approved; `order.email` / `phone` need protected customer data approval; and whether Shopify forwards the visitor's real address in `X-Forwarded-For` is unverified (if it forwards its own, the per-visitor limit would be shared). The page is not linked from anywhere automatically: add "Track your order" to the store menu or footer pointing at `/apps/track`.
+
+Guests who open the order-status link from their confirmation email still run the account block, whose session token probably has no customer id, so it shows nothing for them. The public page above is how they track. This was not tested on a store.
 
 ## Customer experience
 
@@ -64,9 +77,10 @@ Verified here: the app and extension build (`shopify app build`) and typecheck; 
 3. In Shopify admin: Settings, Customer accounts, Customize, open **Order status**, add the **Trekiva Order Tracking** block, save.
 4. In Carrier settings enter credentials, switch carriers on, and run **Check it works** with a real number and a made-up one. Send real replies for Delhivery and XpressBees to confirm the parsers.
 5. Confirm fulfillments carry the carrier name (eKart / Delhivery / XpressBees) and the number each carrier expects. Consider matching on the tracking URL host too.
-6. Not built: carrier webhooks (polling plus the 60s snapshot cache is used), staff notifications, delivery-failure (NDR) actions.
-7. If the store also uses another tracking app (for example AfterShip), do not show both tracking blocks on the Order status page.
-8. Production hardening: CI, telemetry with redaction, accessibility and 320px checks, rollback notes.
+6. Confirm the app proxy works on the store after deploy: open `https://<store>/apps/track` and look up a real recent order. Add a menu link to it.
+7. Not built: carrier webhooks (polling plus the 60s snapshot cache is used), staff notifications, delivery-failure (NDR) actions.
+8. If the store also uses another tracking app (for example AfterShip), do not show both tracking blocks on the Order status page.
+9. Production hardening: CI, telemetry with redaction, accessibility and 320px checks, rollback notes.
 
 ## Ground rules for any change
 

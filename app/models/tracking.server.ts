@@ -24,7 +24,7 @@ const ORDER_QUERY = `#graphql
   }
 `;
 
-type Shipment = {
+export type Shipment = {
   fulfillmentId: string;
   company: string | null;
   number: string;
@@ -88,6 +88,62 @@ function carrierFor(company: string | null) {
 
 // Tracking numbers come from the order's fulfillments in Shopify, never from
 // the browser. Returns null when the order isn't this customer's.
+export type FulfillmentNode = {
+  id: string;
+  trackingInfo: { number: string | null; company: string | null; url: string | null }[];
+};
+
+// Turns an order's fulfillments into shipments with live tracking. Shared by the
+// signed-in account route and the public Track order page; both must already
+// have confirmed who is allowed to see this order.
+export async function buildShipments(shop: string, fulfillments: FulfillmentNode[]) {
+  const settings = await listCarrierSettings(shop);
+  const template = (id: string) =>
+    settings.find((s) => s.carrier === id)?.trackingUrlTemplate || null;
+
+  const shipments: Shipment[] = [];
+  for (const f of fulfillments) {
+    for (const info of f.trackingInfo) {
+      if (!info.number) continue;
+      const carrier = carrierFor(info.company);
+      const tpl = carrier ? template(carrier) : null;
+      shipments.push({
+        fulfillmentId: f.id,
+        company: info.company,
+        number: info.number,
+        carrierUrl: tpl ? tpl.replace("{awb}", encodeURIComponent(info.number)) : info.url,
+        tracking: null,
+        stale: false,
+        syncedAt: null,
+      });
+    }
+  }
+
+  // Fetch live tracking in parallel, only for carriers that are switched on.
+  const ekartOn = (await getCarrierCredentials(shop, "ekart")) !== null;
+  const delhivery = await getCarrierCredentials(shop, "delhivery");
+  const xb = await getCarrierCredentials(shop, "xpressbees");
+  await Promise.all(
+    shipments.map(async (s) => {
+      const carrier = carrierFor(s.company);
+      let result: Awaited<ReturnType<typeof trackWithSnapshot>> | null = null;
+      if (carrier === "ekart" && ekartOn) {
+        result = await trackWithSnapshot(shop, "ekart", s.number, () => fetchEkartTracking(s.number));
+      } else if (carrier === "delhivery" && delhivery?.apiKey) {
+        const { apiKey, useStaging } = delhivery;
+        result = await trackWithSnapshot(shop, `delhivery:${useStaging ? "staging" : "live"}`, s.number, () =>
+          fetchDelhiveryTracking(s.number, apiKey, useStaging),
+        );
+      } else if (carrier === "xpressbees" && xb?.accountId && xb.password) {
+        const creds = { shop, email: xb.accountId, password: xb.password };
+        result = await trackWithSnapshot(shop, "xpressbees", s.number, async () => (await fetchXpressbees(s.number, creds)).tracking);
+      }
+      if (result) Object.assign(s, result);
+    }),
+  );
+  return shipments;
+}
+
 // A failure of the lookup itself, as opposed to "no such order for this
 // customer". The code and message end up in the server log, never the browser.
 export class TrackingLookupError extends Error {
@@ -128,52 +184,5 @@ export async function getOrderTracking(
   const order = body.data?.order;
   if (!order || order.customer?.id !== customerId) return null;
 
-  const settings = await listCarrierSettings(shop);
-  const template = (id: string) =>
-    settings.find((s) => s.carrier === id)?.trackingUrlTemplate || null;
-
-  const shipments: Shipment[] = [];
-  for (const f of order.fulfillments as {
-    id: string;
-    trackingInfo: { number: string | null; company: string | null; url: string | null }[];
-  }[]) {
-    for (const info of f.trackingInfo) {
-      if (!info.number) continue;
-      const carrier = carrierFor(info.company);
-      const tpl = carrier ? template(carrier) : null;
-      shipments.push({
-        fulfillmentId: f.id,
-        company: info.company,
-        number: info.number,
-        carrierUrl: tpl ? tpl.replace("{awb}", encodeURIComponent(info.number)) : info.url,
-        tracking: null,
-        stale: false,
-        syncedAt: null,
-      });
-    }
-  }
-
-  // Fetch live tracking in parallel, only for carriers that are switched on.
-  const ekartOn = (await getCarrierCredentials(shop, "ekart")) !== null;
-  const delhivery = await getCarrierCredentials(shop, "delhivery");
-  const xb = await getCarrierCredentials(shop, "xpressbees");
-  await Promise.all(
-    shipments.map(async (s) => {
-      const carrier = carrierFor(s.company);
-      let result: Awaited<ReturnType<typeof trackWithSnapshot>> | null = null;
-      if (carrier === "ekart" && ekartOn) {
-        result = await trackWithSnapshot(shop, "ekart", s.number, () => fetchEkartTracking(s.number));
-      } else if (carrier === "delhivery" && delhivery?.apiKey) {
-        const { apiKey, useStaging } = delhivery;
-        result = await trackWithSnapshot(shop, `delhivery:${useStaging ? "staging" : "live"}`, s.number, () =>
-          fetchDelhiveryTracking(s.number, apiKey, useStaging),
-        );
-      } else if (carrier === "xpressbees" && xb?.accountId && xb.password) {
-        const creds = { shop, email: xb.accountId, password: xb.password };
-        result = await trackWithSnapshot(shop, "xpressbees", s.number, async () => (await fetchXpressbees(s.number, creds)).tracking);
-      }
-      if (result) Object.assign(s, result);
-    }),
-  );
-  return shipments;
+  return buildShipments(shop, order.fulfillments);
 }
