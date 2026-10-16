@@ -15,6 +15,7 @@ import {
 } from "../models/carrier.server";
 import { testCarrier, type CarrierTestResult } from "../models/carrier-test.server";
 import { EncryptionKeyError } from "../utils/crypto.server";
+import { formatDateTime } from "../utils/labels";
 
 type Result = {
   ok: boolean;
@@ -77,8 +78,6 @@ const INTRO: Record<string, string> = {
   xpressbees:
     "Needs the email and password you use to sign in to the XpressBees panel. API access must be switched on for your account.",
 };
-
-const MASK = "••••••••••••";
 
 type CarrierRow = ReturnType<typeof useLoaderData<typeof loader>>["carriers"][number];
 
@@ -199,12 +198,15 @@ function CarrierCard({ c }: { c: CarrierRow }) {
 
           {c.carrier === "delhivery" && (
             <>
+              {c.hasApiKey && (
+                <SavedNote text="Your token is saved and stored encrypted." />
+              )}
               <s-password-field
-                label="Delhivery API token"
-                placeholder={c.hasApiKey ? MASK : ""}
+                label={c.hasApiKey ? "Replace the saved token (optional)" : "Delhivery API token"}
+                placeholder={c.hasApiKey ? "Leave empty to keep the saved token" : ""}
                 details={
                   c.hasApiKey
-                    ? "A token is saved. Leave this blank to keep it, or type a new one to replace it."
+                    ? "For safety a saved token is never shown again. Type here only to replace it."
                     : "Paste your token here."
                 }
                 value={apiKey}
@@ -227,12 +229,15 @@ function CarrierCard({ c }: { c: CarrierRow }) {
                 value={accountId}
                 onInput={(e) => setAccountId(e.currentTarget.value)}
               />
+              {c.hasPassword && (
+                <SavedNote text="Your password is saved and stored encrypted." />
+              )}
               <s-password-field
-                label="XpressBees password"
-                placeholder={c.hasPassword ? MASK : ""}
+                label={c.hasPassword ? "Replace the saved password (optional)" : "XpressBees password"}
+                placeholder={c.hasPassword ? "Leave empty to keep the saved password" : ""}
                 details={
                   c.hasPassword
-                    ? "A password is saved. Leave this blank to keep it, or type a new one to replace it."
+                    ? "For safety a saved password is never shown again. Type here only to replace it."
                     : "The password for that email."
                 }
                 value={password}
@@ -252,6 +257,9 @@ function CarrierCard({ c }: { c: CarrierRow }) {
               Save {c.name}
             </s-button>
           </s-stack>
+          {c.updatedAt && (
+            <s-text color="subdued">Last saved {formatDateTime(c.updatedAt)}</s-text>
+          )}
         </s-stack>
 
         <s-divider />
@@ -277,6 +285,15 @@ function CarrierCard({ c }: { c: CarrierRow }) {
         {result?.test && <TestResult test={result.test} />}
       </s-stack>
     </s-section>
+  );
+}
+
+function SavedNote({ text }: { text: string }) {
+  return (
+    <s-stack direction="inline" gap="small-200" alignItems="center">
+      <s-badge tone="success">Saved</s-badge>
+      <s-text color="subdued">{text}</s-text>
+    </s-stack>
   );
 }
 

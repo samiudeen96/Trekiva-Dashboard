@@ -29,6 +29,7 @@ export async function listCarrierSettings(shop: string) {
       useStaging: row?.useStaging ?? false,
       accountId: row?.accountId ?? "",
       trackingUrlTemplate: row?.trackingUrlTemplate ?? "",
+      updatedAt: row?.updatedAt ? row.updatedAt.toISOString() : null,
       secretsUnreadable: unreadable,
       hasApiKey: Boolean(secrets.apiKey),
       hasPassword: Boolean(secrets.password),
