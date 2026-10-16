@@ -25,9 +25,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       forwarded || "unknown",
       body?.order,
       body?.contact,
+      body?.token,
     );
-    if (result.ok) return Response.json({ shipments: result.shipments });
-    const status = { not_found: 404, invalid: 400, slow_down: 429, unavailable: 503 }[result.reason];
+    if (result.ok) {
+      return Response.json({ order: result.orderName, shipments: result.shipments, token: result.token });
+    }
+    const status = { not_found: 404, invalid: 400, slow_down: 429, unavailable: 503, expired: 401 }[result.reason];
     return Response.json({ error: result.reason }, { status });
   } catch (error) {
     if (error instanceof TrackingLookupError) {

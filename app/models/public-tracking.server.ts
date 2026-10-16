@@ -1,5 +1,6 @@
 import { buildShipments, TrackingLookupError, type FulfillmentNode } from "./tracking.server";
 import { allow, count, record } from "../utils/rate-limit.server";
+import { signLookup, verifyLookup } from "../utils/lookup-token.server";
 
 // Anything with this shape works, which also lets tests pass a stand-in.
 export type AdminClient = {
@@ -30,9 +31,17 @@ const ORDER_FAIL_LIMIT = 5; // wrong guesses per order number
 const ORDER_FAIL_WINDOW = 15 * 60 * 1000;
 
 export type PublicResult =
-  | { ok: true; shipments: Awaited<ReturnType<typeof buildShipments>> }
-  // Every failure looks the same to the visitor, except slowing down.
-  | { ok: false; reason: "not_found" | "invalid" | "slow_down" | "unavailable" };
+  | {
+      ok: true;
+      orderName: string;
+      shipments: Awaited<ReturnType<typeof buildShipments>>;
+      // Only when the email or phone was just checked. Lets a refresh bring the
+      // result back without asking again.
+      token: string | null;
+    }
+  // Every failure looks the same to the visitor, except slowing down and an
+  // expired pass (the page then just shows the form again).
+  | { ok: false; reason: "not_found" | "invalid" | "slow_down" | "unavailable" | "expired" };
 
 // "#TR-001392" and "tr-001392" both mean the order shown as TR-001392.
 export function normalizeOrderNumber(input: unknown): string | null {
@@ -69,10 +78,17 @@ export async function lookupPublicOrder(
   clientKey: string,
   orderInput: unknown,
   contactInput: unknown,
+  tokenInput?: unknown,
 ): Promise<PublicResult> {
   const orderNumber = normalizeOrderNumber(orderInput);
   const contact = typeof contactInput === "string" ? contactInput.trim() : "";
-  if (!orderNumber || contact.length < 5 || contact.length > 100) {
+  if (!orderNumber) return { ok: false, reason: "invalid" };
+
+  // A valid pass for this order stands in for the email or phone.
+  const hasPass = typeof tokenInput === "string" && tokenInput !== "";
+  const passOk = hasPass && verifyLookup(tokenInput, shop, orderNumber);
+  if (hasPass && !passOk && !contact) return { ok: false, reason: "expired" };
+  if (!passOk && (contact.length < 5 || contact.length > 100)) {
     return { ok: false, reason: "invalid" };
   }
 
@@ -100,11 +116,19 @@ export async function lookupPublicOrder(
   const order = (body.data?.orders?.nodes ?? []).find(
     (o): o is FulfillmentOrder => Boolean(o) && o!.name.replace(/^#/, "").toUpperCase() === orderNumber,
   );
-  if (!order || !contactMatches(contact, order)) {
+  const verified = passOk || (order ? contactMatches(contact, order) : false);
+  if (!order || !verified) {
     record(`fail:${shop}:${orderNumber}`, ORDER_FAIL_WINDOW);
     return { ok: false, reason: "not_found" };
   }
-  return { ok: true, shipments: await buildShipments(shop, order.fulfillments) };
+  return {
+    ok: true,
+    orderName: order.name.replace(/^#/, ""),
+    shipments: await buildShipments(shop, order.fulfillments),
+    // A new pass only when the contact was just proven, so a pass can't be
+    // renewed forever from itself.
+    token: passOk ? null : signLookup(shop, orderNumber),
+  };
 }
 
 type FulfillmentOrder = {
