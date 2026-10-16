@@ -32,6 +32,7 @@
   "trackOnCarrier": "Track on the carrier's website",
   "unavailableTitle": "Live tracking isn't available right now",
   "unavailableBody": "Your parcel is with the carrier. Use the link below to see its latest status.",
-  "loadError": "We couldn't load tracking for this order.",
-  "retry": "Try again"
+  "loadError": "Tracking couldn't load for this order.",
+  "retry": "Try again",
+  "editorOnly": "Customers don't see this message. Check the app's server log for the reason."
 }

@@ -20,6 +20,8 @@ export async function listCarrierSettings(shop: string) {
   return CARRIERS.map((c) => {
     const row = rows.find((r) => r.carrier === c.id);
     const secrets = row?.secretsEnc ? readSecrets(row.secretsEnc) : {};
+    // Saved details exist but can't be decrypted: the server's key changed.
+    const unreadable = Boolean(row?.secretsEnc) && !canDecrypt(row!.secretsEnc!);
     return {
       carrier: c.id,
       name: c.name,
@@ -27,10 +29,20 @@ export async function listCarrierSettings(shop: string) {
       useStaging: row?.useStaging ?? false,
       accountId: row?.accountId ?? "",
       trackingUrlTemplate: row?.trackingUrlTemplate ?? "",
+      secretsUnreadable: unreadable,
       hasApiKey: Boolean(secrets.apiKey),
       hasPassword: Boolean(secrets.password),
     };
   });
+}
+
+function canDecrypt(enc: string): boolean {
+  try {
+    decrypt(enc);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function readSecrets(enc: string): Secrets {

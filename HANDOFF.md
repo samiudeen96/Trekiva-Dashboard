@@ -59,7 +59,7 @@ Verified here: the app and extension build (`shopify app build`) and typecheck; 
 
 ## Open items
 
-1. Host the backend at `https://dashboard.trekiva.in`: a host, PostgreSQL (switch `provider` in `schema.prisma` and regenerate the single `init` migration), and environment variables (client id, client secret, app URL, scopes, a **new production** `SETTINGS_ENCRYPTION_KEY`, database URL).
+1. Host the backend at `https://dashboard.trekiva.in`: a host, PostgreSQL (switch `provider` in `schema.prisma` and regenerate the single `init` migration), and environment variables (client id, client secret, app URL, scopes, a **new production** `SETTINGS_ENCRYPTION_KEY`, database URL). Keep the encryption key stable: without it, saving a carrier token or password fails (the settings page says so); if it changes later, saved details become unreadable and the page asks for them to be entered again. Run `prisma migrate deploy` on the server so the `CarrierSetting` and `TrackingSnapshot` tables exist.
 2. Link and deploy: `npm run config:link`, `npm run deploy`, install on the store. `include_config_on_deploy` was removed from `shopify.app.toml`, so app URL, redirect URLs and scopes are NOT pushed on deploy unless it is restored or they are set by hand in the Dev Dashboard.
 3. In Shopify admin: Settings, Customer accounts, Customize, open **Order status**, add the **Trekiva Order Tracking** block, save.
 4. In Carrier settings enter credentials, switch carriers on, and run **Check it works** with a real number and a made-up one. Send real replies for Delhivery and XpressBees to confirm the parsers.

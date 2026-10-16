@@ -73,6 +73,12 @@ function Tracking() {
   // Nothing to show until the order has tracking numbers.
   if (state.phase === 'ready' && !state.shipments.length) return null;
 
+  // Tracking is a bonus on the order page, so a failure must not put an error
+  // in front of customers. It is still shown in the editor preview, where the
+  // person setting things up needs to see it.
+  const inEditor = Boolean(shopify.extension.editor);
+  if (state.phase === 'error' && !inEditor) return null;
+
   const shipments = state.shipments ?? [];
   return (
     <s-section heading={t('title')}>
@@ -86,6 +92,7 @@ function Tracking() {
         <s-banner tone="critical">
           <s-stack gap="small">
             <s-text>{t('loadError')}</s-text>
+            <s-text color="subdued">{t('editorOnly')}</s-text>
             <s-button click={load}>{t('retry')}</s-button>
           </s-stack>
         </s-banner>

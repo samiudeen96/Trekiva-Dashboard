@@ -88,15 +88,44 @@ function carrierFor(company: string | null) {
 
 // Tracking numbers come from the order's fulfillments in Shopify, never from
 // the browser. Returns null when the order isn't this customer's.
+// A failure of the lookup itself, as opposed to "no such order for this
+// customer". The code and message end up in the server log, never the browser.
+export class TrackingLookupError extends Error {
+  constructor(
+    public code: "not_installed" | "admin_access",
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 export async function getOrderTracking(
   shop: string,
   customerId: string,
   orderId: string,
 ): Promise<Shipment[] | null> {
-  const { admin } = await unauthenticated.admin(shop);
+  let admin;
+  try {
+    ({ admin } = await unauthenticated.admin(shop));
+  } catch {
+    throw new TrackingLookupError(
+      "not_installed",
+      "No saved Shopify session for this shop. Open the app once in Shopify admin to finish installing it.",
+    );
+  }
   const res = await admin.graphql(ORDER_QUERY, { variables: { id: orderId } });
-  const { data } = await res.json();
-  const order = data?.order;
+  const body = (await res.json()) as {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data?: any;
+    errors?: { message?: string }[];
+  };
+  // Access problems (missing scope, or customer data not approved) come back
+  // as GraphQL errors, not as a missing order. Report them as what they are.
+  if (body.errors?.length) {
+    const messages = body.errors.map((e) => e.message).join("; ");
+    throw new TrackingLookupError("admin_access", messages);
+  }
+  const order = body.data?.order;
   if (!order || order.customer?.id !== customerId) return null;
 
   const settings = await listCarrierSettings(shop);

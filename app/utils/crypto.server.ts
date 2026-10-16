@@ -1,10 +1,14 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
+// Thrown when the server has no usable encryption key, so callers can tell the
+// admin exactly what to fix instead of showing a generic failure.
+export class EncryptionKeyError extends Error {}
+
 function key(): Buffer {
   const raw = process.env.SETTINGS_ENCRYPTION_KEY;
   const buf = raw ? Buffer.from(raw, "base64") : Buffer.alloc(0);
   if (buf.length !== 32) {
-    throw new Error(
+    throw new EncryptionKeyError(
       "SETTINGS_ENCRYPTION_KEY must be 32 bytes, base64 encoded (openssl rand -base64 32)",
     );
   }
