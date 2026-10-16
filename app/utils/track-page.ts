@@ -41,7 +41,7 @@ export const TRACK_PAGE_HTML = String.raw`
   .trk-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 54px; padding: 0 28px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font-weight: 600; font-size: 1rem; text-decoration: none; transition: transform .15s ease, box-shadow .2s ease, background .2s ease; }
   .trk-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,.18); }
   .trk-btn:active { transform: translateY(0) scale(.99); box-shadow: none; }
-  .trk-btn:focus-visible, .trk-link:focus-visible, .trk-toggle:focus-visible, .trk-copy:focus-visible, .trk-again:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 45%, transparent); }
+  .trk-btn:focus-visible, .trk-link:focus-visible, .trk-toggle:focus-visible, .trk-copy:focus-visible, .trk-again:focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ok) 60%, transparent); }
   .trk-btn[disabled] { opacity: .6; cursor: default; transform: none; box-shadow: none; }
   .trk-form .trk-btn { width: 100%; margin-top: 4px; }
 
@@ -105,7 +105,7 @@ export const TRACK_PAGE_HTML = String.raw`
   .trk-copy.done { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
 
   /* history */
-  .trk-toggle { display: inline-flex; align-items: center; gap: 8px; margin: 20px 0 0; padding: 8px 0; border: 0; background: none; color: var(--ink); font-weight: 600; border-radius: 8px; }
+  .trk-toggle { display: inline-flex; align-items: center; gap: 8px; margin: 14px 0 0 -12px; padding: 10px 12px; border: 0; background: none; color: var(--ink); font-weight: 600; border-radius: 8px; }
   .trk-toggle svg { width: 16px; height: 16px; transition: transform .25s ease; }
   .trk-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
   .trk-tl { list-style: none; margin: 14px 0 0; padding: 0; animation: trkIn .3s ease both; }
@@ -117,7 +117,7 @@ export const TRACK_PAGE_HTML = String.raw`
   .trk-tl b { display: block; }
   .trk-tl span { display: block; color: var(--muted); }
   .trk-tl small { display: block; color: var(--muted); opacity: .85; margin-top: 2px; }
-  .trk-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 22px; color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; border-radius: 6px; }
+  .trk-link { display: inline-flex; align-items: center; gap: 6px; margin: 14px 0 0 -8px; padding: 8px; color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; border-radius: 6px; }
   .trk-link:hover { text-decoration-thickness: 2px; }
 
   /* loading */
@@ -293,6 +293,20 @@ export const TRACK_PAGE_HTML = String.raw`
     return ol;
   }
 
+  // The carrier's status ("In Transit") can repeat on every line. The detail it gives
+  // ("Vehicle Departed") is what tells the customer something, so it leads, and the
+  // status stays visible on the line below. Nothing is dropped or reworded.
+  function eventTitle(e) {
+    return (e.description && e.description !== e.label) ? e.description : e.label;
+  }
+  function eventSub(e) {
+    var parts = [];
+    if (e.description && e.description !== e.label) parts.push(e.label);
+    if (e.location) parts.push(e.location);
+    if (e.at) parts.push(when(e.at));
+    return parts.join(' \u00b7 ');
+  }
+
   function row(label, buildValue) {
     var r = el('div', 'trk-row');
     r.appendChild(el('dt', null, label));
@@ -349,12 +363,9 @@ export const TRACK_PAGE_HTML = String.raw`
       var latest = t.events && t.events[0];
       if (latest) {
         rows.appendChild(row('Latest update', function (dd) {
-          dd.appendChild(el('b', null, latest.label));
-          if (latest.description) dd.appendChild(document.createTextNode(latest.description));
-          var where = [];
-          if (latest.location) where.push(latest.location);
-          if (latest.at) where.push(when(latest.at));
-          if (where.length) dd.appendChild(el('small', null, where.join(' · ')));
+          dd.appendChild(el('b', null, eventTitle(latest)));
+          var sub = eventSub(latest);
+          if (sub) dd.appendChild(el('small', null, sub));
         }));
       } else if (t.lastUpdate) {
         rows.appendChild(row('Last updated', function (dd) { dd.appendChild(document.createTextNode(when(t.lastUpdate))); }));
@@ -385,12 +396,9 @@ export const TRACK_PAGE_HTML = String.raw`
       ul.hidden = true;
       t.events.forEach(function (e) {
         var li = el('li');
-        li.appendChild(el('b', null, e.label));
-        if (e.description) li.appendChild(el('span', null, e.description));
-        var line = [];
-        if (e.location) line.push(e.location);
-        if (e.at) line.push(when(e.at));
-        if (line.length) li.appendChild(el('small', null, line.join(' · ')));
+        li.appendChild(el('b', null, eventTitle(e)));
+        var sub = eventSub(e);
+        if (sub) li.appendChild(el('small', null, sub));
         ul.appendChild(li);
       });
       toggle.addEventListener('click', function () {

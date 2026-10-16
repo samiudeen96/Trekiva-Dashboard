@@ -3,7 +3,7 @@
 client_id = "09f2982b40ffffec37de42fa4f989b4e"
 application_url = "https://dashboard.trekiva.in"
 embedded = true
-name = "Trekiva Customer Dashboard"
+name = "Trekiva Track Order"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes

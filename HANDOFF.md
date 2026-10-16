@@ -6,6 +6,8 @@ You are being asked to review or continue a Shopify app. Read this whole file fi
 
 A Shopify app that shows **live shipment tracking** (footwear store, India, INR) in two places: **on the order page of signed-in customers' accounts**, and on a **public "Track your order" page on the storefront for visitors who aren't signed in**. Trekiva keeps its Impact theme storefront and Shopify's own customer login. Native Orders, Profile and Addresses are untouched. It supports **eKart, Delhivery and XpressBees**.
 
+In Shopify the app is named **Trekiva Track Order** (`name` in `shopify.app.toml`; it takes effect after `npm run deploy`). The block merchants add in the theme editor is called **Trekiva Order Tracking** (the extension's `name`).
+
 The customer-facing part is one Shopify **Customer Account UI Extension** (web components, Preact, API version 2026-10, target `customer-account.order-status.block.render`). It renders inside Shopify's hosted account shell, so it cannot ship arbitrary HTML or CSS.
 
 Backend: React Router app (Shopify CLI template, TypeScript) with Prisma. SQLite in development; PostgreSQL is planned for production. Public domain: `https://dashboard.trekiva.in` (not deployed yet).
